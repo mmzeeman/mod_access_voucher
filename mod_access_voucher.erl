@@ -194,7 +194,7 @@ logon_if_voucher_ok(Voucher, Context) ->
             {ok, SessionContext} = z_session_manager:ensure_session(Context),
             {ok, LogonContext} = z_auth:logon(UserId, SessionContext),
             z_session:set(z_access_voucher_allowed_dispatches, DispatchNames, LogonContext),
-            z_context:set_noindex_header(true, LogonContext)
+            z_context:set_noindex_header(true, z_context:set_nocache_headers(LogonContext))
     end.
 
 get_allowed_dispatches(#context{session_id=SessionId}=Context) ->
