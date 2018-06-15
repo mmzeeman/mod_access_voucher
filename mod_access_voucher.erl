@@ -31,6 +31,7 @@
 %% Api
 -export([
     new_voucher/2, 
+    new_voucher/3, 
     use_voucher/2, 
     start_link/1
 ]).
@@ -63,11 +64,12 @@
 
 new_voucher(DispatchNames, Context) ->
     case z_acl:user(Context) of
-        undefined ->
-            {error, no_user};
-        UserId ->
-            gen_server:call(name(Context), {new_voucher, UserId, DispatchNames})
+        undefined -> {error, no_user};
+        UserId -> new_voucher(UserId, DispatchNames, Context)
     end.
+   
+new_voucher(UserId, DispatchNames, Context) ->
+    gen_server:call(name(Context), {new_voucher, UserId, DispatchNames}).
 
 use_voucher(VoucherId, Context) ->
     gen_server:call(name(Context), {use_voucher, VoucherId}).
@@ -162,13 +164,11 @@ observe_acl_rcs_update_check(_, Props, Context) ->
 %% Helpers
 %%
 
-name(#context{}=Context) ->
-    name(?MODULE, Context#context.host);
-name(Host) when is_atom(Host) ->
-    name(?MODULE, Host).
+name(Context) ->
+    name(?MODULE, Context).
 
-name(Atom, Host) when is_atom(Atom) ->
-    z_utils:name_for_host(Atom, Host).
+name(Atom, Context) ->
+    z_utils:name_for_site(Atom, Context).
 
 delegate(#context{session_pid=undefined}) -> 
     undefined; % no session, let other acl modules decide what to do.
