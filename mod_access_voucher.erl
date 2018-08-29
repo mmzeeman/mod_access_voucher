@@ -62,13 +62,16 @@
 %% Api
 %%
 
+% @doc get a new access voucher for the currently logged in user. DispatchNames
+% can be all, meaning that all dispatches are allowed, or a list with allowed
+% dispatch names.
 new_voucher(DispatchNames, Context) ->
     case z_acl:user(Context) of
         undefined -> {error, no_user};
         UserId -> new_voucher(UserId, DispatchNames, Context)
     end.
    
-new_voucher(UserId, DispatchNames, Context) ->
+new_voucher(UserId, DispatchNames, Context) when is_list(DispatchNames) orelse DispatchNames =:= all ->
     gen_server:call(name(Context), {new_voucher, UserId, DispatchNames}).
 
 use_voucher(VoucherId, Context) ->
@@ -174,8 +177,8 @@ delegate(#context{session_pid=undefined}) ->
     undefined; % no session, let other acl modules decide what to do.
 delegate(Context) ->
     case get_allowed_dispatches(Context) of
-        undefined -> 
-            undefined; % pass, this user is not logged on with a voucher.
+        undefined -> undefined; % pass, this user is not logged on with a voucher.
+	all -> undefined; % This dispatch is allowed, further checks by other acl module
         DispatchList -> 
             case lists:member(z_context:get(zotonic_dispatch, Context), DispatchList) of
                 true ->
